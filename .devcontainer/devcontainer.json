@@ -1,0 +1,35 @@
+{
+	"name": "gai-ttt-svr",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"runArgs": [
+		"--gpus=all",
+		// Add a custom network that shares the same address space as WSL instance
+		"--network=gai-sandbox"
+	],
+	"mounts": [
+		"source=${localEnv:HOME}/.gai,target=/root/.gai,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/.cache,target=/root/.cache,type=bind,consistency=cached",
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.shell.linux": "/bin/bash"
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-toolsai.jupyter"
+			]
+		}
+	},
+	"forwardPorts": [
+		12036
+	],
+	"appPort": [
+		"12036:12036"
+	],
+	"postCreateCommand": "pip install -e .",
+	"remoteUser": "kakkoii1337"
+}

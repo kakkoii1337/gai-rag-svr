@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "PyPI: update gai-sdk",
+            "type": "shell",
+            "command": "/bin/bash",
+            "args": [
+                "-c",
+                "poetry remove gai-sdk || poetry cache clear PyPI --all -n && poetry add gai-sdk"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Docker: build",
+            "type": "shell",
+            "command": "/bin/bash",
+            "args": [
+                "-c",
+                "gai docker build ${workspaceFolder}/pyproject.toml gai-rag"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}
