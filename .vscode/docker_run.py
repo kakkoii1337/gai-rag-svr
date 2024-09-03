@@ -1,11 +1,11 @@
 import toml,os,subprocess
 from gai.scripts._scripts_utils import _get_version
 
-base_name="gai-rag"
+base_name="gai-rag-svr"
 
-def _docker_run_rag(component,version="latest"):
-    if component != base_name:
-        print("Wrong component found.")
+def _docker_run_rag(image_name,version="latest"):
+    if image_name != base_name:
+        print("Wrong image_name found.")
         return
     cmd=f"""docker run -d \
         -e DEFAULT_GENERATOR="rag-instructor-sentencepiece" \
@@ -13,10 +13,10 @@ def _docker_run_rag(component,version="latest"):
         --gpus all \
         -v ~/.gai:/app/.gai \
         -p 12036:12036 \
-        --name {component} \
+        --name {image_name} \
         --network gai-sandbox \
-        kakkoii1337/{component}:{version}"""
-    os.system(f"docker stop {component} && docker rm -f {component}")
+        kakkoii1337/{image_name}:{version}"""
+    os.system(f"docker stop {image_name} && docker rm -f {image_name}")
     os.system(cmd)
 
 def main():

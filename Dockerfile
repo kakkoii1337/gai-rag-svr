@@ -35,9 +35,11 @@ RUN python -m nltk.downloader punkt_tab
 RUN python -m nltk.downloader averaged_perceptron_tagger_eng
 
 # Step 5: Startup
-RUN echo '{"app_dir":"/app/.gai"}' > /root/.gairc
-VOLUME /app/.gai
-ENV MODEL_PATH="/app/.gai/models"
+RUN echo '{"app_dir":"/root/.gai"}' > /root/.gairc
+VOLUME /root/.gai
+ENV MODEL_PATH="/root/.gai/models"
 ENV CATEGORY=${CATEGORY}
-WORKDIR /app/src/gai/rag/server/api
+WORKDIR /workspaces/${PROJECT_NAME}/src/gai/rag/server/api
+
+
 CMD ["bash","-c","python main.py"]

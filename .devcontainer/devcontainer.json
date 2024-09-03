@@ -1,12 +1,18 @@
 {
-	"name": "gai-ttt-svr",
+	"name": "gai-rag-svr",
 	"build": {
-		"dockerfile": "Dockerfile"
+		"dockerfile": "Dockerfile.devcontainer",
+		"args": {
+			"USERNAME": "kakkoii1337",
+			"CACHEBUST": "1"
+		},
+		"context": ".."
 	},
 	"runArgs": [
 		"--gpus=all",
+		"--network=host"
 		// Add a custom network that shares the same address space as WSL instance
-		"--network=gai-sandbox"
+		//"--network=gai-sandbox"
 	],
 	"mounts": [
 		"source=${localEnv:HOME}/.gai,target=/root/.gai,type=bind,consistency=cached",
@@ -27,9 +33,12 @@
 	"forwardPorts": [
 		12036
 	],
-	"appPort": [
-		"12036:12036"
-	],
-	"postCreateCommand": "pip install -e .",
-	"remoteUser": "kakkoii1337"
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:1": {
+			"version": "latest",
+			"moby": true
+		}
+	},
+	"remoteUser": "kakkoii1337",
+	"postCreateCommand": "/bin/bash ${HOME}/postCreateCommand.sh"
 }

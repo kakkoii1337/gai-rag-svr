@@ -1,0 +1,27 @@
+services:
+  gai-rag-svr:
+    image: kakkoii1337/gai-rag-svr:latest
+    environment:
+      DEFAULT_GENERATOR: "rag-instructor-sentencepiece"
+      LOG_LEVEL: "DEBUG"
+      TZ: "Asia/Singapore"
+      SWAGGER_URL: "/doc"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    volumes:
+      - ~/.gai:/root/.gai
+    ports:
+      - "12036:12036"
+      #- "5678:5678"
+    networks:
+      - default
+    restart: always
+    # command: >
+    # python -m debugpy --listen 0.0.0.0:5678 main.py
+    #command: python -m debugpy --listen 0.0.0.0:5678 main.py --wait-for-client
+    #command: sleep infinity
+
