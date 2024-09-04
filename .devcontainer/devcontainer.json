@@ -1,13 +1,14 @@
 {
 	"name": "gai-rag-svr",
-	"build": {
-		"dockerfile": "Dockerfile.devcontainer",
-		"args": {
-			"USERNAME": "kakkoii1337",
-			"CACHEBUST": "1"
-		},
-		"context": ".."
-	},
+	"image": "kakkoii1337/gai-rag-svr_devcontainer:1.0.3",
+	// "build": {
+	// 	"dockerfile": "Dockerfile.devcontainer",
+	// 	"args": {
+	// 		"USERNAME": "kakkoii1337",
+	// 		"CACHEBUST": "1"
+	// 	},
+	// 	"context": ".."
+	// },
 	"runArgs": [
 		"--gpus=all",
 		"--network=host"
