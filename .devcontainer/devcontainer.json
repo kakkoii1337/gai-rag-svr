@@ -15,8 +15,8 @@
 		//"--network=gai-sandbox"
 	],
 	"mounts": [
-		"source=${localEnv:HOME}/.gai,target=/root/.gai,type=bind,consistency=cached",
-		"source=${localEnv:HOME}/.cache,target=/root/.cache,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/.gai,target=/home/kakkoii1337/.gai,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/.cache,target=/home/kakkoii1337/.cache,type=bind,consistency=cached",
 		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
 	],
 	"customizations": {
@@ -34,7 +34,7 @@
 		12036
 	],
 	"features": {
-		"ghcr.io/devcontainers/features/docker-in-docker:1": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2.11.0": {
 			"version": "latest",
 			"moby": true
 		}

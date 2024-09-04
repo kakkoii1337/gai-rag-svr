@@ -11,15 +11,65 @@
             ],
             "problemMatcher": []
         },
+        // {
+        //     "label": "Docker: build devcontainer",
+        //     "type": "shell",
+        //     "command": "/bin/bash",
+        //     "args": [
+        //         "-c",
+        //         "gai docker build ${workspaceFolder}/pyproject.toml --dockerfile-path=${workspaceFolder}/.devcontainer/Dockerfile.devcontainer --image-name=gai-rag-svr_devcontainer"
+        //     ],
+        //     "problemMatcher": []
+        // },
+        // {
+        //     "label": "Docker: push devcontainer",
+        //     "type": "shell",
+        //     "command": "/bin/bash",
+        //     "args": [
+        //         "-c",
+        //         "gai docker push ${workspaceFolder}/pyproject.toml --dockerfile-path=${workspaceFolder}/.devcontainer/Dockerfile.devcontainer --image-name=gai-rag-svr_devcontainer"
+        //     ],
+        //     "problemMatcher": []
+        // },
         {
-            "label": "Docker: build",
+            "label": "docker: build gai-rag-svr",
             "type": "shell",
             "command": "/bin/bash",
             "args": [
                 "-c",
-                "gai docker build ${workspaceFolder}/pyproject.toml gai-rag"
+                "gai docker build ${workspaceFolder}/pyproject.toml"
             ],
             "problemMatcher": []
-        }
+        },
+        {
+            "label": "docker: push gai-rag-svr",
+            "type": "shell",
+            "command": "/bin/bash",
+            "args": [
+                "-c",
+                "gai docker push ${workspaceFolder}/pyproject.toml"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "docker-compose: down gai-rag-svr",
+            "type": "shell",
+            "command": "/bin/bash",
+            "args": [
+                "-c",
+                "docker compose -f ${workspaceFolder}/docker-compose.yml down"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "docker-compose: up gai-rag-svr",
+            "type": "shell",
+            "command": "/bin/bash",
+            "args": [
+                "-c",
+                "docker compose -f ${workspaceFolder}/docker-compose.yml up"
+            ],
+            "problemMatcher": []
+        },
     ]
 }

@@ -546,7 +546,16 @@ if __name__ == "__main__":
 
     import uvicorn
     from gai.lib.server import api_factory
-    app = api_factory.create_app(pyproject_toml, category="rag")
+    from gai.lib.common import utils
+
+    # Check if a local gai.yml exists. If not, use the default one in ~/.gai
+    here = os.path.dirname(__file__)
+    local_config_path = os.path.join(here, "gai.yml")
+    gai_config = utils.get_gai_config()
+    if os.path.exists(local_config_path):
+        gai_config = utils.get_gai_config(local_config_path)    
+
+    app = api_factory.create_app(pyproject_toml, category="rag",gai_config=gai_config)
     app.include_router(router, dependencies=[Depends(lambda: app.state.host)])
     config = uvicorn.Config(
         app=app, 

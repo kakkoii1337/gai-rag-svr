@@ -4,29 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gai-rag-svr"
-version = "0.311"
+version = "1.0.3"
 description = "Refer to https://gai-labs.github.io/gai for more information"
 readme = "README.md"
 classifiers = [ "Programming Language :: Python :: 3.10", "Development Status :: 3 - Alpha", "License :: OSI Approved :: MIT License", "Intended Audience :: Science/Research", "Intended Audience :: Developers", "Operating System :: OS Independent", "Topic :: Software Development", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Scientific/Engineering :: Artificial Intelligence",]
 requires-python = ">=3.10"
-dependencies = [ 
-    "numpy==1.26.4", 
-    "toml==0.10.2", 
-    "tokenizers==0.20.0", 
-    "uvicorn==0.30.6", 
-    "jsonschema>=4.23.0", 
-    "gai-sdk>=0.261",
-    "chromadb==0.4.22",
-    "python-multipart>=0.0.9",
-    "PyMySQL>=1.1.0",
-    "sentencepiece>=0.1.99",
-    "sentence_transformers>=2.2.2",
-    "sqlalchemy>=2.0.0",
-    "unstructured[all-docs]==0.12.0"
-    ]
-[tool.setuptools.packages]
-find = { where = ["src"], include = ["gai.rag.server"] }
-
+dependencies = [ "numpy==1.26.4", "toml==0.10.2", "tokenizers==0.19.1", "uvicorn==0.30.6", "jsonschema>=4.23.0", "gai-sdk>=0.261", "chromadb==0.4.22", "InstructorEmbedding==1.0.1", "python-multipart>=0.0.9", "PyMySQL>=1.1.0", "sentencepiece>=0.1.99", "sentence_transformers==2.2.2", "sqlalchemy>=2.0.0", "transformers==4.44.2", "unstructured[all-docs]==0.12.0",]
 [[project.authors]]
 name = "kakkoii1337"
 email = "kakkoii1337@gmail.com"
@@ -34,5 +17,6 @@ email = "kakkoii1337@gmail.com"
 [project.optional-dependencies]
 dev = [ "pytest", "nox", "twine", "keyrings.alt", "ipykernel", "flake8", "pytest-ordering",]
 
-
-
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "gai.rag.server",]

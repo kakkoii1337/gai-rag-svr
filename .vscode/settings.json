@@ -4,6 +4,7 @@
         "justMyCode": false // Set to false to step into external code
     },
     "python.languageServer": "Pylance",
+    "python.defaultInterpreterPath": "/home/kakkoii1337/.venv/bin/python",
     // python.testing
     "python.testing.pytestArgs": [
         "tests"

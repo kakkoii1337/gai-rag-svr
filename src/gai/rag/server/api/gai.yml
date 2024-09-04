@@ -1,0 +1,33 @@
+api_url: ""
+logging:
+    level: "INFO"
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    filename: ""
+    filemode: "a"
+    stream: "stdout"
+    loggers:
+        gai.rag: "DEBUG"
+        gai.common.http_utils: "DEBUG"
+gen:
+    default:
+        rag: "rag-gai"
+    rag-gai:
+        type: "rag"
+        generator_name: "instructor-sentencepiece"
+        chromadb:
+            path: "rag/chromadb"
+            n_results: 3
+        sqlite:
+            path: "rag/gai-rag.db"
+        model_path: "models/instructor-large"
+        device: "cuda"
+        chunks:
+            size: 1000
+            overlap: 100
+            path: "chunks"
+        module_name: "gai.rag.server.gai_rag"
+        class_name: "RAG"
+        init_args: []
+        init_kwargs: {}
+
