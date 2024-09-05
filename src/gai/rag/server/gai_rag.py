@@ -8,7 +8,9 @@ from gai.lib.common.utils import get_gai_config, get_app_path
 from gai.rag.server.dalc.RAGDBRepository import RAGDBRepository
 from sqlalchemy import create_engine
 from gai.lib.common.profile_function import profile_function
-from gai.rag.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
+from gai.rag.server.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
+from gai.rag.server.dtos.indexed_doc import IndexedDocPydantic
+from gai.rag.server.dtos.index_doc_response import IndexDocResponse
 
 os.environ["LOG_LEVEL"]="DEBUG"
 from gai.lib.common import logging, file_utils
@@ -100,7 +102,7 @@ class RAG:
     # Step 1/3: Saves the file to the database and creates the document header.
     async def index_document_header_async(self, 
         req: CreateDocHeaderRequestPydantic
-        ):
+        ) -> IndexedDocPydantic:
 
         try:
             if req.FileType is None:
@@ -251,7 +253,7 @@ class RAG:
     # Public. Used by rag_api and Gaigen.
     async def index_async(self, 
         req: CreateDocHeaderRequestPydantic,
-        ws_manager=None):
+        ws_manager=None) -> IndexDocResponse:
 
         if ws_manager:
             try:
@@ -287,7 +289,9 @@ class RAG:
             ws_manager=ws_manager)
 
         logger.info("RAG.index_async: indexing...done")
-        return {"document_id":doc.Id,"chunkgroup_id":chunkgroup.Id,"chunk_ids":chunk_ids}
+
+        return IndexDocResponse(DocumentId=doc.Id, ChunkgroupId=chunkgroup.Id, ChunkIds = chunk_ids)
+
 
     # RETRIEVAL
     def retrieve(self, collection_name, query_texts, n_results=None):

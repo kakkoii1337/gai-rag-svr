@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Text, VARCHAR, DateTime, Boolean, BLOB, JSON, INTEGER, Date
 from gai.rag.server.dalc.Base import Base
 from sqlalchemy.orm import relationship
-from gai.rag.dtos.indexed_doc_chunk import IndexedDocChunkPydantic
+from gai.rag.server.dtos.indexed_doc_chunk import IndexedDocChunkPydantic
 
 class IndexedDocumentChunk(Base):
     __tablename__ = 'IndexedDocumentChunks'

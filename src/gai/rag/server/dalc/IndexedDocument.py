@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from gai.rag.server.dalc.Base import Base
 from gai.rag.server.dalc.IndexedDocumentChunk import IndexedDocumentChunk
 
-from gai.rag.dtos.indexed_doc import IndexedDocPydantic
+from gai.rag.server.dtos.indexed_doc import IndexedDocPydantic
 
 class IndexedDocument(Base):
     __tablename__ = 'IndexedDocuments'

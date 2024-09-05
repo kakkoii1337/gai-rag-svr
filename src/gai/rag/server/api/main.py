@@ -13,7 +13,7 @@ load_dotenv()
 from gai.lib.common.errors import *
 from gai.lib.server.api_dependencies import get_app_version
 from gai.lib.common.WSManager import ws_manager
-from gai.rag.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
+from gai.rag.server.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
 
 # Router
 from pydantic import BaseModel
@@ -25,6 +25,11 @@ import uuid
 
 router = APIRouter()
 pyproject_toml = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..", "..", "..", "..", "..", "pyproject.toml")
+
+# Add this at the beginning, before your other routes
+@router.get("/")
+async def root():
+    return JSONResponse(status_code=200, content={"message": "gai-rag-svr"})
 
 ### ----------------- RAG ----------------- ###
 
@@ -138,7 +143,7 @@ async def index_file_async(file: UploadFile = File(...), req: str = Form(...)):
         req=CreateDocHeaderRequestPydantic(**json.loads(req))
     except Exception as e:
         id = str(uuid.uuid4())
-        logger.error(f"rag_api.step_header_async: {id} Error=Failed to parse request,{str(e)}")
+        logger.error(f"rag_api.index_file_async: {id} Error=Failed to parse request,{str(e)}")
         raise InternalException(id)
 
     rag = app.state.host.generator
@@ -154,19 +159,15 @@ async def index_file_async(file: UploadFile = File(...), req: str = Form(...)):
                 file_object.write(content)
                 # Update the request with the new file path
                 req.FilePath = dest_filepath
-            logger.info(f"rag_api.index_file: temp file created.")
+            logger.info(f"rag_api.index_file_async: temp file created.")
             result = await rag.index_async(req, ws_manager)
 
-            return JSONResponse(status_code=200, content={
-                "document_id": result["document_id"],
-                "chunkgroup_id":result["chunkgroup_id"],
-                "chunk_ids": result["chunk_ids"]
-            })
+            return result
     except DuplicatedDocumentException:
         raise
     except Exception as e:
         id = str(uuid.uuid4())
-        logger.error(f"rag_api.index_file: {id} {str(e)}")
+        logger.error(f"rag_api.index_file_async: {id} {str(e)}")
         raise InternalException(id)
 
 

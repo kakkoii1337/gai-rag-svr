@@ -3,11 +3,11 @@ import uuid
 from gai.lib.common.errors import DuplicatedDocumentException
 from gai.rag.server.dalc.IndexedDocumentChunk import IndexedDocumentChunk
 from gai.rag.server.dalc.IndexedDocumentChunkGroup import IndexedDocumentChunkGroup
-from gai.rag.dtos.chunk_info import ChunkInfoPydantic
-from gai.rag.dtos.indexed_doc_chunkgroup import IndexedDocChunkGroupPydantic
-from gai.rag.dtos.indexed_doc_chunk import IndexedDocChunkPydantic
-from gai.rag.dtos.indexed_doc_header import IndexedDocHeaderPydantic
-from gai.rag.dtos.indexed_doc import IndexedDocPydantic
+from gai.rag.server.dtos.chunk_info import ChunkInfoPydantic
+from gai.rag.server.dtos.indexed_doc_chunkgroup import IndexedDocChunkGroupPydantic
+from gai.rag.server.dtos.indexed_doc_chunk import IndexedDocChunkPydantic
+from gai.rag.server.dtos.indexed_doc_header import IndexedDocHeaderPydantic
+from gai.rag.server.dtos.indexed_doc import IndexedDocPydantic
 
 from tqdm import tqdm
 from datetime import datetime
@@ -128,7 +128,7 @@ class RAGDBRepository:
 
 # Documents -------------------------------------------------------------------------------------------------------------------------------------------
 
-    def list_document_headers(self, collection_name=None):
+    def list_document_headers(self, collection_name=None) -> list[IndexedDocPydantic]:
         with self.session_scope() as session:        
             try:
                 if collection_name is None:
@@ -222,7 +222,7 @@ class RAGDBRepository:
                 raise
 
 
-    def get_document_header(self, collection_name, document_id):
+    def get_document_header(self, collection_name, document_id)->IndexedDocPydantic:
         with self.session_scope() as session:
             try:
                 orm = session.query(IndexedDocument).options(
