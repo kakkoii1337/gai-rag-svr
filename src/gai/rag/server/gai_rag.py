@@ -8,6 +8,7 @@ from gai.lib.common.utils import get_gai_config, get_app_path
 from gai.rag.server.dalc.RAGDBRepository import RAGDBRepository
 from sqlalchemy import create_engine
 from gai.lib.common.profile_function import profile_function
+from gai.rag.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
 
 os.environ["LOG_LEVEL"]="DEBUG"
 from gai.lib.common import logging, file_utils
@@ -98,63 +99,54 @@ class RAG:
 
     # Step 1/3: Saves the file to the database and creates the document header.
     async def index_document_header_async(self, 
-        collection_name, 
-        file_path, 
-        file_type=None,
-        title=None, 
-        source= None, 
-        abstract=None,
-        authors=None,
-        publisher =None,
-        published_date=None, 
-        comments=None,
-        keywords=None):
+        req: CreateDocHeaderRequestPydantic
+        ):
 
         try:
-            if file_type is None:
-                _,file_type = os.path.splitext(file_path)
-            logger.info(f"rag.index_document_header_async: request started. collection_name={collection_name} file_path={file_path} title={title} source={source} abstract={abstract} authors={authors} publisher={publisher} published_date={published_date} comments={comments} keywords={keywords}")
+            if req.FileType is None:
+                _,req.FileType = os.path.splitext(req.FilePath)
+            logger.info(f"rag.index_document_header_async: request started. collection_name={req.CollectionName} file_path={req.FilePath} title={req.Title} source={req.Source} abstract={req.Abstract} authors={req.Authors} publisher={req.Publisher} published_date={req.PublishedDate} comments={req.Comments} keywords={req.Keywords}")
         except Exception as e:
             logger.error(f"RAG.index_document_header_async: failed to validate parameters. {e}")
             raise e
 
         try:
             # If document exists, use update instead of create
-            document_id = self.create_document_hash(file_path)
-            doc = self.db_repo.get_document_header(collection_name, document_id)
+            document_id = self.create_document_hash(req.FilePath)
+            doc = self.db_repo.get_document_header(req.CollectionName, document_id)
             if doc:
                 logger.debug(f"rag.index_document_header_async: document exists. updating doc with id={document_id}.")
                 document_id=self.db_repo.update_document_header(
                     document_id = document_id,
-                    collection_name=collection_name, 
-                    title=title, 
-                    source=source, 
-                    abstract=abstract,
-                    authors=authors,
-                    publisher = publisher,
-                    published_date=published_date, 
-                    comments=comments,
-                    keywords=keywords
+                    collection_name=req.CollectionName, 
+                    title=req.Title, 
+                    source=req.Source, 
+                    abstract=req.Abstract,
+                    authors=req.Authors,
+                    publisher = req.Publisher,
+                    published_date=req.PublishedDate, 
+                    comments=req.Comments,
+                    keywords=req.Keywords
                     )
             else:
                 logger.debug(f"rag.index_document_header_async: creating doc header with id={document_id}.")
-                if file_type is None:
-                    _,file_type = os.path.splitext(file_path)
+                if req.FileType is None:
+                    _,req.FileType = os.path.splitext(req.FilePath)
                 document_id=self.db_repo.create_document_header(
-                    collection_name=collection_name, 
-                    file_path=file_path, 
-                    file_type=file_type,
-                    title=title, 
-                    source=source, 
-                    abstract=abstract,
-                    authors=authors,
-                    publisher = publisher,
-                    published_date=published_date, 
-                    comments=comments,
-                    keywords=keywords
+                    collection_name=req.CollectionName, 
+                    file_path=req.FilePath, 
+                    file_type=req.FileType,
+                    title=req.Title, 
+                    source=req.Source, 
+                    abstract=req.Abstract,
+                    authors=req.Authors,
+                    publisher = req.Publisher,
+                    published_date=req.PublishedDate, 
+                    comments=req.Comments,
+                    keywords=req.Keywords
                     )
             logger.debug(f"rag.index_document_header_async: document_header created. id={document_id}")
-            doc = self.db_repo.get_document_header(collection_name, document_id)
+            doc = self.db_repo.get_document_header(req.CollectionName, document_id)
             return doc
         except Exception as error:
             logger.error(
@@ -258,19 +250,7 @@ class RAG:
     # Split text in temp dir and index each chunk into vector store locally.
     # Public. Used by rag_api and Gaigen.
     async def index_async(self, 
-        collection_name, 
-        file_path, 
-        file_type=None,
-        title=None, 
-        source= None, 
-        abstract=None,
-        authors=None,
-        publisher =None,
-        published_date=None, 
-        comments=None,
-        keywords=None,
-        chunk_size=None, 
-        chunk_overlap=None, 
+        req: CreateDocHeaderRequestPydantic,
         ws_manager=None):
 
         if ws_manager:
@@ -279,19 +259,7 @@ class RAG:
             except Exception as e:
                 logger.error(f"RAG.index_async: Failed to broadcast 'Request received' message. {e}")
 
-        doc = await self.index_document_header_async(
-            collection_name=collection_name, 
-            file_path=file_path, 
-            file_type=file_type,
-            title=title, 
-            source=source, 
-            abstract=abstract,
-            authors=authors,
-            publisher = publisher,
-            published_date=published_date, 
-            comments=comments,
-            keywords=keywords
-        )
+        doc = await self.index_document_header_async(req)
 
         if ws_manager:
             try:
@@ -300,10 +268,10 @@ class RAG:
                 logger.error(f"RAG.index_async: Failed to broadcast 'Breaking down document into chunks ...' message. {e}")
 
         chunkgroup = await self.index_document_split_async(
-            collection_name=collection_name,
+            collection_name=req.CollectionName,
             document_id=doc.Id,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
+            chunk_size=req.ChunkSize,
+            chunk_overlap=req.ChunkOverlap
         )
 
         if ws_manager:
@@ -313,7 +281,7 @@ class RAG:
                 logger.error(f"RAG.index_async: Failed to broadcast 'Start indexing ...' message. {e}")
         
         chunk_ids = await self.index_document_index_async(
-            collection_name=collection_name, 
+            collection_name=req.CollectionName, 
             document_id=doc.Id, 
             chunkgroup_id=chunkgroup.Id, 
             ws_manager=ws_manager)

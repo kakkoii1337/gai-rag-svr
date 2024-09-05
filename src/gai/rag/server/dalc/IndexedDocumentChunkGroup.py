@@ -1,6 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Text, VARCHAR, DateTime, Boolean, BLOB, JSON, INTEGER, Date
 from gai.rag.server.dalc.Base import Base
 from sqlalchemy.orm import relationship
+from gai.rag.dtos.indexed_doc_chunkgroup import IndexedDocChunkGroupPydantic
 
 class IndexedDocumentChunkGroup(Base):
     __tablename__ = 'IndexedDocumentChunkGroups'
@@ -20,3 +21,18 @@ class IndexedDocumentChunkGroup(Base):
 
     # Relationship to IndexedDocumentChunk
     Chunks = relationship("IndexedDocumentChunk", back_populates="ChunkGroup")
+
+    def to_pydantic(self):
+        try:
+            return IndexedDocChunkGroupPydantic(**{
+                'Id': self.Id,
+                'DocumentId': self.DocumentId,
+                'SplitAlgo': self.SplitAlgo,
+                'ChunkCount': self.ChunkCount,
+                'ChunkSize': self.ChunkSize,
+                'Overlap': self.Overlap,
+                'IsActive': self.IsActive,
+                'ChunksDir': self.ChunksDir
+            })
+        except Exception as e:
+            raise RuntimeError("Failed to convert from DALC to Pydantic model.") from e

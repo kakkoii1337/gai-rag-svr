@@ -7,7 +7,7 @@
             "command": "/bin/bash",
             "args": [
                 "-c",
-                "poetry remove gai-sdk || poetry cache clear PyPI --all -n && poetry add gai-sdk"
+                "pip install --upgrade gai-sdk"
             ],
             "problemMatcher": []
         },

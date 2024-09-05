@@ -3,11 +3,12 @@ import uuid
 from gai.lib.common.errors import DuplicatedDocumentException
 from gai.rag.server.dalc.IndexedDocumentChunk import IndexedDocumentChunk
 from gai.rag.server.dalc.IndexedDocumentChunkGroup import IndexedDocumentChunkGroup
-from gai.rag.server.models.ChunkInfoPydantic import ChunkInfoPydantic
-from gai.rag.server.models.IndexedDocumentChunkGroupPydantic import IndexedDocumentChunkGroupPydantic
-from gai.rag.server.models.IndexedDocumentChunkPydantic import IndexedDocumentChunkPydantic
-from gai.rag.server.models.IndexedDocumentHeaderPydantic import IndexedDocumentHeaderPydantic
-from gai.rag.server.models.IndexedDocumentPydantic import IndexedDocumentPydantic
+from gai.rag.dtos.chunk_info import ChunkInfoPydantic
+from gai.rag.dtos.indexed_doc_chunkgroup import IndexedDocChunkGroupPydantic
+from gai.rag.dtos.indexed_doc_chunk import IndexedDocChunkPydantic
+from gai.rag.dtos.indexed_doc_header import IndexedDocHeaderPydantic
+from gai.rag.dtos.indexed_doc import IndexedDocPydantic
+
 from tqdm import tqdm
 from datetime import datetime
 from datetime import date
@@ -135,7 +136,7 @@ class RAGDBRepository:
                 else:
                     documents = session.query(IndexedDocument).filter_by(CollectionName=collection_name).all()
 
-                return [IndexedDocumentHeaderPydantic.from_dalc(document) for document in documents]
+                return [document.to_pydantic() for document in documents]
             except Exception as e:
                 logger.error(f"RAGDBRepository.list_document_headers: Error = {e}")
                 raise
@@ -233,7 +234,11 @@ class RAGDBRepository:
                 ).first()
                 if orm is None:
                     return None
-                return IndexedDocumentHeaderPydantic.from_dalc(orm)
+                pydantic=orm.to_pydantic()
+
+                #exclude the file content
+                pydantic.File = None
+                return pydantic
             except Exception as e:
                 logger.error(f"RAGDBRepository.get_document_header: Error = {e}")
                 raise
@@ -350,7 +355,7 @@ class RAGDBRepository:
             if existing_doc is None:
                 raise ValueError(f"RAGDBRepository.create_chunkgroup: Document header not found {document_id}")
             
-            if existing_doc.FileType == 'pdf':
+            if existing_doc.FileType.lower() == 'pdf' or existing_doc.FileType.lower() == '.pdf':
                 import tempfile
                 with tempfile.NamedTemporaryFile() as temp_file:
                     temp_file.write(existing_doc.File)
@@ -380,7 +385,7 @@ class RAGDBRepository:
             chunkgroup.ChunksDir = chunks_dir
 
             session.add(chunkgroup)
-            pydantic_chunkgroup = IndexedDocumentChunkGroupPydantic.from_dalc(chunkgroup)
+            pydantic_chunkgroup = chunkgroup.to_pydantic()
             return pydantic_chunkgroup
 
     def list_chunkgroup_ids(self, document_id=None):
@@ -460,7 +465,7 @@ class RAGDBRepository:
                 chunks = session.query(IndexedDocumentChunk).filter_by(ChunkGroupId=chunkgroup_id).all()
 
             # Convert each ORM object to Pydantic model using from_dalc
-            return [IndexedDocumentChunkPydantic.from_dalc(chunk) for chunk in chunks]
+            return [chunk.to_pydantic() for chunk in chunks]
 
     def get_chunk(self, chunk_id, session=None):
         with self.session_scope(session) as session:        
@@ -478,7 +483,7 @@ class RAGDBRepository:
                     ).filter(
                         IndexedDocument.Id == document_id
                     ).all()
-                    return [ChunkInfoPydantic.from_dalc(chunk) for chunk in chunks]
+                    return [chunk.to_pydantic() for chunk in chunks]
                 except Exception as e:
                     logger.error(f"RAGDBRepository.list_chunks_by_document_id: Error = {e}")
                     raise

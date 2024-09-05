@@ -1,6 +1,4 @@
 import os
-from gai.rag.server.models.IndexedDocumentChunkPydantic import IndexedDocumentChunkPydantic
-from gai.rag.server.models.IndexedDocumentPydantic import IndexedDocumentPydantic
 from chromadb.config import Settings
 import chromadb
 from gai.lib.common.utils import get_gai_config, get_app_path

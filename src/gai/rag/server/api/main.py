@@ -13,6 +13,7 @@ load_dotenv()
 from gai.lib.common.errors import *
 from gai.lib.server.api_dependencies import get_app_version
 from gai.lib.common.WSManager import ws_manager
+from gai.rag.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
 
 # Router
 from pydantic import BaseModel
@@ -39,33 +40,33 @@ async def version():
 # Description: Step 1 of 3 - Save file to database and create header
 # POST /gen/v1/rag/step/header
 @router.post("/gen/v1/rag/step/header")
-async def step_header_async(collection_name: str = Form(...), file: UploadFile = File(...), metadata: str = Form(...)):
+async def step_header_async(file: UploadFile = File(...), req:str = Form(...)):
+    try:
+        req=CreateDocHeaderRequestPydantic(**json.loads(req))
+    except Exception as e:
+        id = str(uuid.uuid4())
+        logger.error(f"rag_api.step_header_async: {id} Error=Failed to parse request,{str(e)}")
+        raise InternalException(id)
+
     rag = app.state.host.generator
     logger.info(f"rag_api.index_file: started.")
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
 
-            # Save the file to a temporary directory
-            file_location = os.path.join(temp_dir, file.filename)
-            with open(file_location, "wb+") as file_object:
+            # Save the file to a temporary directory using the filename from the header
+            dest_filename = os.path.basename(req.FilePath)
+            dest_filepath = os.path.join(temp_dir, dest_filename)
+            with open(dest_filepath, "wb+") as file_object:
                 content = await file.read()  # Read the content of the uploaded file
                 file_object.write(content)
+                # Update the request with the new file path
+                req.FilePath = dest_filepath
             logger.info(f"rag_api.step_header_async: temp file created.")
 
             # Give the temp file path to the RAG
-            metadata_dict = json.loads(metadata)
+            #metadata_dict = json.loads(metadata)
 
-            doc = await rag.index_document_header_async(
-                collection_name=collection_name,    # agent_id
-                file_path=file_location,            # tmp_file_path
-                file_type=file.filename.split(".")[-1],
-                title=metadata_dict.get("title", ""),
-                source=metadata_dict.get("source", ""),
-                authors=metadata_dict.get("authors", ""),
-                publisher=metadata_dict.get("publisher", ""),
-                published_date=metadata_dict.get("publishedDate", ""),
-                comments=metadata_dict.get("comments", ""),
-                keywords=metadata_dict.get("keywords", ""))
+            doc = await rag.index_document_header_async(req)
             return doc
     except DuplicatedDocumentException:
         raise
@@ -130,34 +131,31 @@ async def step_index_async(req: DocumentIndexRequest):
 # Description : This indexes the entire file in a single step.
 # POST /gen/v1/rag/index-file
 @router.post("/gen/v1/rag/index-file")
-async def index_file_async(collection_name: str = Form(...), file: UploadFile = File(...), metadata: str = Form(...)):
+async def index_file_async(file: UploadFile = File(...), req: str = Form(...)):
     logger.info(f"rag_api.index_file: started.")
+
+    try:
+        req=CreateDocHeaderRequestPydantic(**json.loads(req))
+    except Exception as e:
+        id = str(uuid.uuid4())
+        logger.error(f"rag_api.step_header_async: {id} Error=Failed to parse request,{str(e)}")
+        raise InternalException(id)
+
     rag = app.state.host.generator
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
 
-            # Save the file to a temporary directory
-            file_location = os.path.join(temp_dir, file.filename)
-            with open(file_location, "wb+") as file_object:
+            # Save the file to a temporary directory using the filename from the header
+            dest_filename = os.path.basename(req.FilePath)
+            dest_filepath = os.path.join(temp_dir, dest_filename)
+
+            with open(dest_filepath, "wb+") as file_object:
                 content = await file.read()  # Read the content of the uploaded file
                 file_object.write(content)
+                # Update the request with the new file path
+                req.FilePath = dest_filepath
             logger.info(f"rag_api.index_file: temp file created.")
-
-            # Give the temp file path to the RAG
-            metadata_dict = json.loads(metadata)
-
-            result = await rag.index_async(
-                collection_name=collection_name,
-                file_path=file_location,
-                file_type=file.filename.split(".")[-1],
-                title=metadata_dict.get("title", ""),
-                source=metadata_dict.get("source", ""),
-                authors=metadata_dict.get("authors", ""),
-                publisher=metadata_dict.get("publisher", ""),
-                published_date=metadata_dict.get("publishedDate", ""),
-                comments=metadata_dict.get("comments", ""),
-                keywords=metadata_dict.get("keywords", ""),
-                ws_manager=ws_manager)
+            result = await rag.index_async(req, ws_manager)
 
             return JSONResponse(status_code=200, content={
                 "document_id": result["document_id"],
