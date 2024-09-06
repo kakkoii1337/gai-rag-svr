@@ -13,7 +13,10 @@ load_dotenv()
 from gai.lib.common.errors import *
 from gai.lib.server.api_dependencies import get_app_version
 from gai.lib.common.WSManager import ws_manager
+from gai.rag.server.dtos.indexed_doc import IndexedDocPydantic
 from gai.rag.server.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
+from gai.rag.server.dtos.indexed_doc_chunkgroup import IndexedDocChunkGroupPydantic
+from gai.rag.server.dtos.indexed_doc_chunk_ids import IndexedDocChunkIdsPydantic
 
 # Router
 from pydantic import BaseModel
@@ -44,8 +47,8 @@ async def version():
 
 # Description: Step 1 of 3 - Save file to database and create header
 # POST /gen/v1/rag/step/header
-@router.post("/gen/v1/rag/step/header")
-async def step_header_async(file: UploadFile = File(...), req:str = Form(...)):
+@router.post("/gen/v1/rag/step/header", response_model=IndexedDocPydantic)
+async def step_header_async(file: UploadFile = File(...), req:str = Form(...)) -> IndexedDocPydantic:
     try:
         req=CreateDocHeaderRequestPydantic(**json.loads(req))
     except Exception as e:
@@ -88,8 +91,8 @@ class DocumentSplitRequest(BaseModel):
     document_id: str
     chunk_size: int
     chunk_overlap: int
-@router.post("/gen/v1/rag/step/split")
-async def step_split_async(req: DocumentSplitRequest):
+@router.post("/gen/v1/rag/step/split", response_model=IndexedDocChunkGroupPydantic)
+async def step_split_async(req: DocumentSplitRequest) -> IndexedDocChunkGroupPydantic:
     logger.info(f"rag_api.index_file: started.")
     rag = app.state.host.generator
     try:
@@ -113,17 +116,17 @@ class DocumentIndexRequest(BaseModel):
     document_id: str
     chunkgroup_id: str
 @router.post("/gen/v1/rag/step/index")
-async def step_index_async(req: DocumentIndexRequest):
+async def step_index_async(req: DocumentIndexRequest) -> IndexedDocChunkIdsPydantic:
     logger.info(f"rag_api.index_file: started.")
     rag = app.state.host.generator
     try:
-        chunk_ids = await rag.index_document_index_async(
+        result = await rag.index_document_index_async(
             collection_name=req.collection_name,
             document_id=req.document_id, 
             chunkgroup_id = req.chunkgroup_id,
             ws_manager=ws_manager
             )
-        return {"chunk_ids": chunk_ids}
+        return result
     except DuplicatedDocumentException:
         raise
     except Exception as e:
@@ -136,7 +139,7 @@ async def step_index_async(req: DocumentIndexRequest):
 # Description : This indexes the entire file in a single step.
 # POST /gen/v1/rag/index-file
 @router.post("/gen/v1/rag/index-file")
-async def index_file_async(file: UploadFile = File(...), req: str = Form(...)):
+async def index_file_async(file: UploadFile = File(...), req: str = Form(...))  -> IndexedDocChunkIdsPydantic:
     logger.info(f"rag_api.index_file: started.")
 
     try:

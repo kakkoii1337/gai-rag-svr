@@ -1,6 +1,6 @@
 services:
   gai-rag-svr:
-    image: kakkoii1337/gai-rag-svr:1.0.10
+    image: kakkoii1337/gai-rag-svr:1.0.11
     environment:
       DEFAULT_GENERATOR: "rag-instructor-sentencepiece"
       LOG_LEVEL: "DEBUG"

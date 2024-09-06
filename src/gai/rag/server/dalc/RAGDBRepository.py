@@ -345,7 +345,7 @@ class RAGDBRepository:
                           chunk_size, 
                           chunk_overlap, 
                           splitter,
-                          session=None):
+                          session=None) -> IndexedDocChunkGroupPydantic:
         with self.session_scope(session) as session:            
             existing_doc = session.query(IndexedDocument).filter(
                 IndexedDocument.Id==document_id, 

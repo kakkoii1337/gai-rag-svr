@@ -10,7 +10,8 @@ from sqlalchemy import create_engine
 from gai.lib.common.profile_function import profile_function
 from gai.rag.server.dtos.create_doc_header_request import CreateDocHeaderRequestPydantic
 from gai.rag.server.dtos.indexed_doc import IndexedDocPydantic
-from gai.rag.server.dtos.index_doc_response import IndexDocResponse
+from gai.rag.server.dtos.indexed_doc_chunkgroup import IndexedDocChunkGroupPydantic
+from gai.rag.server.dtos.indexed_doc_chunk_ids import IndexedDocChunkIdsPydantic
 
 os.environ["LOG_LEVEL"]="DEBUG"
 from gai.lib.common import logging, file_utils
@@ -160,7 +161,7 @@ class RAG:
         collection_name,
         document_id,
         chunk_size=None,
-        chunk_overlap=None):
+        chunk_overlap=None) -> IndexedDocChunkGroupPydantic:
         try:
             logger.info("rag.index_document_split_async: splitting chunks")
             # Create the chunk group based on the default splitting algorithm
@@ -200,7 +201,7 @@ class RAG:
                                          collection_name, 
                                          document_id, 
                                          chunkgroup_id, 
-                                         ws_manager=None):
+                                         ws_manager=None) -> IndexedDocChunkIdsPydantic:
 
         try:
             logger.info("RAG.index_document_index_async: Start indexing...")
@@ -209,7 +210,7 @@ class RAG:
             doc = self.db_repo.get_document_header(collection_name, document_id)
             chunks = self.db_repo.list_chunks(chunkgroup_id)
 
-            ids = []
+            chunk_ids = []
             for i, chunk in tqdm(enumerate(chunks)):
                 try:
                     #chunk = self.db_repo.get_chunk(chunk.Id)
@@ -225,7 +226,7 @@ class RAG:
                         published_date=doc.PublishedDate.strftime('%Y-%b-%d') if doc.PublishedDate else "",
                         keywords=doc.Keywords if doc.Keywords else ""
                     )
-                    ids.append(chunk.Id)
+                    chunk_ids.append(chunk.Id)
                     logger.debug(
                         f"RAG.index_document_index_async: Indexed {i+1}/{len(chunks)} chunk {chunk.Id} into collection {collection_name}")
                 except Exception as e:
@@ -241,7 +242,7 @@ class RAG:
                     except Exception as e:
                         logger.error(f"RAG.index_document_index_async: Failed to broadcast 'Send progress {i+1} to updater' message. {e}")
 
-            return ids
+            return IndexedDocChunkIdsPydantic(DocumentId=doc.Id, ChunkgroupId=chunkgroup_id, ChunkIds = chunk_ids)
         except Exception as error:
             logger.error(f"RAG.index_document_index_async: Failed to create chunks. error={error}")
             raise error
@@ -253,7 +254,7 @@ class RAG:
     # Public. Used by rag_api and Gaigen.
     async def index_async(self, 
         req: CreateDocHeaderRequestPydantic,
-        ws_manager=None) -> IndexDocResponse:
+        ws_manager=None) -> IndexedDocChunkIdsPydantic:
 
         if ws_manager:
             try:
@@ -282,7 +283,7 @@ class RAG:
             except Exception as e:
                 logger.error(f"RAG.index_async: Failed to broadcast 'Start indexing ...' message. {e}")
         
-        chunk_ids = await self.index_document_index_async(
+        chunkids = await self.index_document_index_async(
             collection_name=req.CollectionName, 
             document_id=doc.Id, 
             chunkgroup_id=chunkgroup.Id, 
@@ -290,7 +291,7 @@ class RAG:
 
         logger.info("RAG.index_async: indexing...done")
 
-        return IndexDocResponse(DocumentId=doc.Id, ChunkgroupId=chunkgroup.Id, ChunkIds = chunk_ids)
+        return chunkids
 
 
     # RETRIEVAL
