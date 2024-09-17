@@ -1,6 +1,6 @@
 services:
   gai-rag-svr:
-    image: kakkoii1337/gai-rag-svr:1.0.11
+    image: kakkoii1337/gai-rag-svr:1.0.15
     environment:
       DEFAULT_GENERATOR: "rag-instructor-sentencepiece"
       LOG_LEVEL: "DEBUG"
@@ -16,11 +16,11 @@ services:
       - ~/.gai:/root/.gai
     ports:
       - "12036:12036"
-      #- "5678:5678"
+      #- "5679:5679"
     networks:
       - default
     #restart: always
 
-    #command: python -m debugpy --listen 0.0.0.0:5678 main.py --wait-for-client
+    #command: python -m debugpy --listen 0.0.0.0:5679 main.py
     #command: sleep infinity
 

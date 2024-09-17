@@ -40,7 +40,6 @@ class IndexedDocument(Base):
                 'ByteSize': self.ByteSize,
                 'FileName': self.FileName,
                 'FileType': self.FileType,
-                'File': self.File,
                 'Source': self.Source,
                 'Abstract': self.Abstract,
                 'Authors': self.Authors,

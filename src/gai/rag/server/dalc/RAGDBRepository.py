@@ -132,10 +132,19 @@ class RAGDBRepository:
         with self.session_scope() as session:        
             try:
                 if collection_name is None:
-                    documents = session.query(IndexedDocument).all()
+                    #documents = session.query(IndexedDocument).all()
+                    documents = session.query(IndexedDocument).options(
+                        selectinload(IndexedDocument.ChunkGroups),
+                        defer(IndexedDocument.File)
+                    ).all()
                 else:
-                    documents = session.query(IndexedDocument).filter_by(CollectionName=collection_name).all()
-
+                    #documents = session.query(IndexedDocument).filter_by(CollectionName=collection_name).all()
+                    documents = session.query(IndexedDocument).options(
+                        selectinload(IndexedDocument.ChunkGroups),
+                        defer(IndexedDocument.File)
+                    ).filter(
+                        IndexedDocument.CollectionName==collection_name
+                    ).all()
                 return [document.to_pydantic() for document in documents]
             except Exception as e:
                 logger.error(f"RAGDBRepository.list_document_headers: Error = {e}")
@@ -360,6 +369,7 @@ class RAGDBRepository:
                 with tempfile.NamedTemporaryFile() as temp_file:
                     temp_file.write(existing_doc.File)
                     temp_file_path = temp_file.name
+                    logger.info(f"Converting from PDF:{temp_file_path}")
                     text = PDFConvert.pdf_to_text(temp_file_path)
             else:
                 text = existing_doc.File.decode('utf-8')
@@ -368,6 +378,7 @@ class RAGDBRepository:
             src_file = f"/tmp/{filename}.txt"
             with open(src_file, 'w') as f:
                 f.write(text)
+            logger.info(f"Created intermediate file:{src_file}")
 
             # TODO: This reads an entire file into memory and is not efficient for handling large files.
             # It would be better to pass a stream to the splitter instead.

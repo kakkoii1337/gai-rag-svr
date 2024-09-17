@@ -21,5 +21,20 @@
             "console": "integratedTerminal",
             "justMyCode": false
         },
+        {
+            "name": "Attach",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5679
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/src",
+                    "remoteRoot": "/workspaces/gai-rag-svr/src"
+                }
+            ]
+        },
     ]
 }

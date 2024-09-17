@@ -357,7 +357,7 @@ class RAG:
 
 #Documents-------------------------------------------------------------------------------------------------------------------------------------------
 
-    def list_document_headers(self,collection_name=None):
+    def list_document_headers(self,collection_name=None)  -> list[IndexedDocPydantic]:
         return self.db_repo.list_document_headers(collection_name)
         
 #Document-------------------------------------------------------------------------------------------------------------------------------------------
@@ -368,7 +368,7 @@ class RAG:
 
     # This function will only return the document info and the chunk group but without the file blob.
     # To access the rest of the file, load the chunks using the chunk group id.
-    def get_document_header(self,collection_name, document_id):
+    def get_document_header(self,collection_name, document_id)  -> IndexedDocPydantic:
         return self.db_repo.get_document_header(collection_name, document_id)
 
     # This function will only update the document header and not its chunk group.
@@ -390,6 +390,9 @@ class RAG:
         logger.info(f"Deleting document {document_id} from collection {collection_name}...")
         self.vs_repo.delete_document(collection_name, document_id)
         self.db_repo.delete_document(collection_name, document_id)
+
+    def get_document_file(self,collection_name, document_id):
+        return self.db_repo.get_document_file(collection_name, document_id)
 
 #chunkgroups-------------------------------------------------------------------------------------------------------------------------------------------
 

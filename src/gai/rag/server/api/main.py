@@ -22,7 +22,7 @@ from gai.rag.server.dtos.indexed_doc_chunk_ids import IndexedDocChunkIdsPydantic
 from pydantic import BaseModel
 from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi import APIRouter, Body, Depends, File, Form, UploadFile, WebSocket, WebSocketDisconnect, websockets
 import uuid
 
@@ -275,37 +275,30 @@ async def delete_collection(collection_name):
 #Documents-------------------------------------------------------------------------------------------------------------------------------------------
 
 # GET /gen/v1/rag/documents
-@router.get("/gen/v1/rag/documents")
-async def list_document_headers():
+@router.get("/gen/v1/rag/documents",response_model=list[IndexedDocPydantic])
+async def list_document_headers()-> list[IndexedDocPydantic]:
     rag = app.state.host.generator
     try:
         docs = rag.list_document_headers()
         result = []
         for doc in docs:
-            dict = jsonable_encoder(doc)
-            result.append(dict)
-        return JSONResponse(status_code=200, content={
-            "documents": result
-        })        
+            result.append(doc)
+        return result   
     except Exception as e:
         id = str(uuid.uuid4())
         logger.error(f"rag_api.list_documents: {id} {str(e)}")
         raise InternalException(id)
 
 # GET /gen/v1/rag/collection/{collection_name}/documents
-@router.get("/gen/v1/rag/collection/{collection_name}/documents")
-async def list_document_headers_by_collection(collection_name):
+@router.get("/gen/v1/rag/collection/{collection_name}/documents",response_model=List[IndexedDocPydantic])
+async def list_document_headers_by_collection(collection_name) -> List[IndexedDocPydantic]:
     rag = app.state.host.generator
     try:
         docs = rag.list_document_headers(collection_name=collection_name)
         result = []
         for doc in docs:
-            dict = jsonable_encoder(doc)
-            result.append(dict)
-
-        return JSONResponse(status_code=200, content={
-            "documents": result
-        })        
+            result.append(doc)
+        return result
     except Exception as e:
         id = str(uuid.uuid4())
         logger.error(f"rag_api.list_documents: {id} {str(e)}")
@@ -319,8 +312,8 @@ async def list_document_headers_by_collection(collection_name):
 # - 200: { "document": {...} }
 # - 404: { "message": "Document with id {document_id} not found" }
 # - 500: { "message": "Internal error: {id}" }
-@router.get("/gen/v1/rag/collection/{collection_name}/document/{document_id}")
-async def get_document_header(collection_name, document_id):
+@router.get("/gen/v1/rag/collection/{collection_name}/document/{document_id}",response_model=IndexedDocPydantic)
+async def get_document_header(collection_name, document_id)->IndexedDocPydantic:
     rag = app.state.host.generator
     try:
         document = rag.get_document_header(collection_name=collection_name, document_id=document_id)
@@ -328,10 +321,7 @@ async def get_document_header(collection_name, document_id):
             logger.warning(f"rag_api.get_documents: Document with Id={document_id} not found.")
             raise DocumentNotFoundException(document_id)
         
-        result = jsonable_encoder(document)
-        return JSONResponse(status_code=200, content={
-            "document": result
-        })
+        return document
     except DocumentNotFoundException as e:
         raise e
     except Exception as e:
@@ -345,8 +335,8 @@ async def get_document_header(collection_name, document_id):
 # - 200: { "document": {...} }
 # - 404: { "message": "Document with id {document_id} not found" }
 # - 500: { "message": "Internal error: {id}" }
-@router.post("/gen/v1/rag/collection/{collection_name}/document/exists")
-async def get_document_header_by_file(collection_name: str, file: UploadFile = File(...)):
+@router.post("/gen/v1/rag/collection/{collection_name}/document/exists",response_model=IndexedDocPydantic)
+async def get_document_header_by_file(collection_name: str, file: UploadFile = File(...))->IndexedDocPydantic:
     rag = app.state.host.generator
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -367,10 +357,7 @@ async def get_document_header_by_file(collection_name: str, file: UploadFile = F
                 logger.warning(f"rag_api.get_documents: Document with Id={document_id} not found.")
                 raise DocumentNotFoundException(document_id)
             
-            result = jsonable_encoder(document)
-            return JSONResponse(status_code=200, content={
-                "document": result
-            })
+            return document
 
     except Exception as e:
         id = str(uuid.uuid4())
@@ -438,6 +425,36 @@ async def delete_document(collection_name, document_id):
         id = str(uuid.uuid4())
         logger.error(f"rag_api.delete_document: {id} {str(e)}")
         raise InternalException(id)
+
+# GET /gen/v1/rag/collection/{collection_name}/document/{document_id}/file
+# Description: Retrieves the file content of a specific document by document_id
+# Response:
+# - 200: Binary content of the file
+# - 404: { "message": "Document with id {document_id} not found" }
+# - 500: { "message": "Internal error: {id}" }
+@router.get("/gen/v1/rag/collection/{collection_name}/document/{document_id}/file")
+async def get_document_file(collection_name: str, document_id: str):
+    rag = app.state.host.generator
+    try:
+        # Fetch the file content
+        file_content = rag.get_document_file(collection_name, document_id)
+        if file_content is None:
+            logger.warning(f"Document with collection_name={collection_name} document_id={document_id} not found.")
+            raise DocumentNotFoundException(document_id)
+        
+        # Save the file content to a temporary file and return it
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(file_content)
+            temp_file_path = temp_file.name
+
+        return FileResponse(temp_file_path, filename=f"{document_id}.pdf")  # Adjust the filename and content type as needed
+    except DocumentNotFoundException as e:
+        raise e
+    except Exception as e:
+        id = str(uuid.uuid4())
+        logger.error(f"rag_api.get_document_file: {id} {str(e)}")
+        raise InternalException(id)
+
 
 ### ----------------- CHUNKGROUPS ----------------- ###
 # GET "/gen/v1/rag/chunkgroups"
