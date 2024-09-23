@@ -365,6 +365,7 @@ class RAGDBRepository:
                 raise ValueError(f"RAGDBRepository.create_chunkgroup: Document header not found {document_id}")
             
             if existing_doc.FileType.lower() == 'pdf' or existing_doc.FileType.lower() == '.pdf':
+                logger.info(f"Splitting pdf file")
                 import tempfile
                 with tempfile.NamedTemporaryFile() as temp_file:
                     temp_file.write(existing_doc.File)
@@ -372,6 +373,7 @@ class RAGDBRepository:
                     logger.info(f"Converting from PDF:{temp_file_path}")
                     text = PDFConvert.pdf_to_text(temp_file_path)
             else:
+                logger.info(f"Splitting text file")
                 text = existing_doc.File.decode('utf-8')
             
             filename = ".".join(existing_doc.FileName.split(".")[:-1])

@@ -163,8 +163,8 @@ class RAG:
         chunk_size=None,
         chunk_overlap=None) -> IndexedDocChunkGroupPydantic:
         try:
-            logger.info("rag.index_document_split_async: splitting chunks")
             # Create the chunk group based on the default splitting algorithm
+            logger.info("rag.index_document_split_async: delete existing chunkgroup")
 
             # delete any existing chunkgroup and chunks before starting
             # This includes deleting the chunks from VS
@@ -176,6 +176,7 @@ class RAG:
                 chunk_size = self.gai_config["chunks"]["size"]
             if chunk_overlap is None:
                 chunk_overlap = self.gai_config["chunks"]["overlap"]
+            logger.info("rag.index_document_split_async: splitting chunks")
             chunkgroup = self.db_repo.create_chunkgroup(
                 collection_name=collection_name,
                 document_id=document_id, 
